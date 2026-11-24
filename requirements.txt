@@ -1,0 +1,3 @@
+aiohttp
+PyPDF2
+brotli
