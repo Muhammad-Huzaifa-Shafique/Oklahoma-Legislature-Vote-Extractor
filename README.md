@@ -53,16 +53,40 @@ These are public sites, and the defaults are heavy. Auto mode for the House trie
 
 The original script turned off HTTPS certificate checking for its plain `urllib` requests (the `aiohttp` requests always checked). I changed that before publishing, so certificates are now checked everywhere. If a site's certificate cannot be verified on your machine, for example behind a school or company proxy, set `OKVOTES_INSECURE_SSL=1` to skip the check for that run. The script prints a warning when you do.
 
+## Checking the output
+
+`audit_output.py` reads `VotesDetail.csv` and `VoteRollCall.csv` and compares each vote's counts with the member names listed for it. It only reads the files. It needs pandas.
+
+~~~bash
+pip install pandas
+python audit_output.py VotesDetail.csv VoteRollCall.csv
+~~~
+
+I ran it on the House output of one run: 30,475 votes dated January 1999 to May 2025, and 2,341,376 member rows. The data is not in this repository, so run the script on your own output to see your numbers.
+
+| Check | What it found |
+|---|---|
+| Counts add up to the size of the House | Passes. 30,471 of 30,475 votes total 99 to 105 seats. |
+| Every counted seat has a named member | Falls short. Member rows cover 76% of counted seats (Yea 74.8%, Nay 79.8%, Excused 84.6%, CP 99.2%). Only 1 vote has a name for every seat. I have not traced the cause. |
+| Result is filled in | Falls short. Blank on 71% of votes. |
+| Bill number is filled in | Falls short. Blank on 5% of votes. |
+| Type is a real vote type | Mostly passes. 71 votes (0.2%) hold leftover text instead of Third Reading, Fourth Reading or General Order. |
+| Location says where the vote happened | Mislabeled. It follows the bill prefix, so SB votes say Senate Floor although their totals are House-sized. |
+| Member holds only names | Needs cleaning. VAC (4,538 rows), PM (705) and AM (184) also appear. |
+
+The checks cover the House output only. The script can also collect Senate votes, but I have not run those files through the audit.
+
 ## Limits
 
 - Written for the sites as they were in fall 2025. Page layouts and addresses may have changed since (the House pages are on `former.okhouse.gov`), so check it against a few pages before relying on it.
 - Parsing relies on text patterns tuned to these pages. An unusual layout can drop a vote or split a name in the wrong place.
-- There are no automated tests and no hand-checked answers, so accuracy has not been measured.
+- There are no unit tests and no hand-checked answers. The audit above compares the output with its own counts, which shows problems but is not a measured accuracy.
 - It is one long script that asks its questions through dialogs rather than command-line options.
 - No data is included. The CSV files are created when you run it.
 
 ## What I would add next
 
+- Find where the missing member names go: read a few source pages against their rows.
 - A few saved pages with hand-counted votes to test against, then a measured accuracy.
 - Command-line options instead of dialogs, and the script split into modules.
 
